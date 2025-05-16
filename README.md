@@ -134,7 +134,7 @@ Visual interface for reviewing context, managing projects, and editing content.
 
 This project is currently under active development. Much of the functionality is not yet implemented.
 
-![Tests](https://github.com/your-username/context-core/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/alatruwe/context-core/actions/workflows/test.yml/badge.svg)
 
 ### Next Up:
 - [ ] **Context Lifecycle Management** (Creation, Enrichment, Pruning)
