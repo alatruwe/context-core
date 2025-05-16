@@ -1,0 +1,8 @@
+[project]
+name = "context-core"
+version = "0.1.0"
+description = "Context management CLI tool"
+dependencies = ["typer"]
+
+[project.scripts]
+context = "context_core.__main__:app"

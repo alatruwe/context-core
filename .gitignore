@@ -32,6 +32,15 @@ MANIFEST
 *.manifest
 *.spec
 
+*.sqlite3
+
+# VS Code or JetBrains settings (optional)
+.vscode/
+.idea/
+
+# macOS cruft
+.DS_Store
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -130,6 +139,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv/
 env/
 venv/
 ENV/
