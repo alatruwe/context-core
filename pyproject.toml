@@ -6,3 +6,6 @@ dependencies = ["typer"]
 
 [project.scripts]
 context = "context_core.__main__:app"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
