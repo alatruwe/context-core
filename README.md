@@ -1,37 +1,132 @@
 # 🧠 Context Core
 
-Context Core is a library for maintaining persistent, structured context management across multiple AI workflows. 
+**Context Core** is the engine behind structured, persistent context management for AI workflows.  
 
-It enables users to define, manage, and evolve project context over time, allowing AI systems to maintain continuity and relevance throughout multiple interactions.
+It powers a command-line utility, a future web interface, and a custom GPT assistant—so you can keep AI grounded in what matters across conversations.
+
+> Think of it as long-term memory for your AI tools—clear, modular, and under your control.
 
 Designed for anyone who needs to manage project context over time in AI-driven workflows.
 
 ---
-## 📁 Core Functionality
-The library is designed to handle several essential features for managing context over time:
+
+## 🎯 Why It Exists
+
+Modern AI models are powerful—but fragile. They forget fast, require repetition, and lose track of goals.  
+**Context Core** helps you keep your place in long-running projects by giving you tools to:
+
+- Structure reusable context (facts, goals, decisions, etc.)
+- Summarize and evolve project knowledge over time
+- Load the right context when you need it—in a GPT chat, CLI, or agent
+
+Whether you're debugging code, planning product strategy, or writing a book—this framework makes context portable, inspectable, and adaptable.
+
+---
+## ✨ How It Works
+
+The system is project-based and supports both technical and non-technical workflows.  
+At its heart is a simple folder structure with structured files (Markdown or JSON), organized by context type:
+
+```bash
+/context/
+├── facts/
+├── goals/
+├── decisions/
+├── instructions/
+├── actions/
+├── summaries/
+├── archives/
+├── personas/
+├── timeline/
+└── meta.json
+```
+
+These files are loaded and interpreted by:
+
+✅ A custom GPT assistant (primary interface)
+
+💻 A CLI utility (for power users and automation)
+
+🌐 A web UI (coming later)
+
+---
+## 🛠 Core Capabilities (MVP)
 
 ### 🧩 Context Lifecycle Management
-Create and store context in a structured format (Markdown or JSON)
+- Create structured context by type (facts, goals, decisions, etc.)
 
-Enrich context by adding key points, summaries, and decisions from ongoing conversations
+- Summarize sessions into portable context chunks
 
-Prune and refine context as projects evolve
+- Archive outdated or inactive files, and restore them as needed
 
-Archive context that is no longer in active use for later reference
+- Keep active context lean with token-aware workflows
 
 ### 🧠 Summarization Framework
-Generate summaries of individual sessions, aggregating knowledge over time
+- Generate summaries from conversations (AI-assisted or manual)
 
-Focus on decisions, insights, and action items relevant for future sessions
+- Focus on insights, decisions, and future-relevant info
 
-Maintain version history for summaries and context changes
+- Maintain cumulative understanding over time
 
 ### 💾 Storage
-Context files stored locally by default (with optional cloud synchronization)
+- Flat-file system, local-first by default
 
-Version tracking for context evolution, with easy rollback capabilities
+- Version-safe organization
 
-User-controlled storage location, with clear guidelines for file organization
+- Clear folder structure per project
+
+- Optional tagging and config per project
+---
+
+## 🤖 Interfaces
+### ✨ GPT Assistant (Primary)
+- A custom GPT (e.g., "Context Assistant") loads and works with your active context:
+
+- Use natural language to query, update, summarize, and evolve your project memory
+
+- Works with ChatGPT or Claude via API
+
+- Uses CLI tool as backend to fetch, store, and modify context files
+
+### 🖥️ Command-Line Tool (MVP Engine)
+```bash
+context init project-name
+context create facts system-design
+context summarize chat.md
+context update project-name summary.md
+context load --project project-name --facts --goals
+```
+The CLI powers GPT tool actions and supports manual control.
+
+### 🌐 Web UI (Planned)
+Visual interface for reviewing context, managing projects, and editing content.
+
+---
+## 📌 Design Principles
+
+- **GPT-first**: Designed to plug directly into GPTs for natural interaction
+
+- **Simple first**: No databases, just folders and files
+
+- **Token-aware**: Keep AI responses tight and useful
+
+- **User-controlled**: You decide what stays and what gets archived
+
+- **Model-agnostic**: Works with any LLM—ChatGPT, Claude, or your own agent
+
+---
+## ⏳ Roadmap
+ - CLI MVP (Context creation, summarization, loading, archive)
+
+ - GPT Assistant Integration
+
+ - Web UI (project and context explorer)
+
+ - Summary compression & tagging
+
+ - Context relevance scoring
+
+ - Multi-project context and search
 
 ---
 
@@ -47,7 +142,3 @@ This project is currently under active development. Much of the functionality is
 - [ ] **Conversation Archiving** (Separate storage for full conversations)
 - [ ] **Session list / history page**
 - [ ] **Authentication (optional)**
-
----
-## 🧩 Related Projects
-[AI Context](https://github.com/alatruwe/ai-context): A web-based chat tool for maintaining project context in AI conversations.
