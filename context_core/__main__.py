@@ -38,7 +38,7 @@ def init(project_name: str):
     # Prevent overwriting an existing project
     if base_path.exists():
         typer.echo(f"⚠️ Project '{project_name}' already exists.")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     # Create the project folder and each subfolder
     for folder in subfolders:
@@ -69,14 +69,14 @@ def delete_project(project_name: str, force: bool = typer.Option(False, "--force
 
     if not base_path.exists():
         typer.echo(f"❌ Project '{project_name}' does not exist.")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     # Confirm deletion unless --force is used
     if not force:
         confirm = typer.confirm(f"Are you sure you want to delete the project '{project_name}' and all its data?")
         if not confirm:
             typer.echo("❎ Cancelled.")
-            raise typer.Exit()
+            raise typer.Exit(code=1)
 
     # Recursively delete the project folder
     import shutil
