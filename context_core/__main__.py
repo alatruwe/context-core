@@ -8,6 +8,13 @@ from pathlib import Path
 # Create the Typer app
 app = typer.Typer()
 
+VALID_CONTEXT_TYPES = [
+    "facts", "decisions", "goals",
+    "instructions", "actions", "summaries",
+    "archives", "personas", "timeline"
+]
+
+
 # ──────────────────────────────────────────────────────────────
 # CLI COMMAND: hello
 # Say hello to confirm the CLI works
@@ -93,6 +100,13 @@ def create_context(project: str, type: str, name: str):
     """
     Create a new context file in a project (e.g. facts/my-topic.md).
     """
+    if type not in VALID_CONTEXT_TYPES:
+        typer.echo(f"❌ '{type}' is not a valid context type.")
+        typer.echo("📂 Valid types:")
+        for t in VALID_CONTEXT_TYPES:
+            typer.echo(f"  - {t}")
+        raise typer.Exit(code=1)
+
     base_path = Path("context_data") / project / type
     file_path = base_path / f"{name}.md"
 
@@ -104,12 +118,12 @@ def create_context(project: str, type: str, name: str):
         typer.echo(f"⚠️ File '{file_path}' already exists.")
         raise typer.Exit(code=1)
 
-    # Create the file with a simple template
     title = name.replace("-", " ").title()
     content = f"# {title}\n\nCreated on {datetime.now().isoformat()}\n"
     file_path.write_text(content)
 
     typer.echo(f"✅ Created file: {file_path}")
+
 
 # ──────────────────────────────────────────────────────────────
 # CLI COMMAND: delete-context
