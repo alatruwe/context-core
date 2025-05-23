@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from pathlib import Path
 from typer.testing import CliRunner
 from unittest.mock import patch
@@ -33,7 +34,6 @@ def test_init_creates_project_structure():
     # Clean up after
     shutil.rmtree(project_path)
 
-
 def test_init_fails_if_project_exists():
     project_name = "test-existing"
     project_path = DATA_DIR / project_name
@@ -54,7 +54,6 @@ def test_init_fails_if_project_exists():
 
     # Clean up
     shutil.rmtree(project_path)
-
 
 def test_init_fails_without_project_name():
     result = runner.invoke(app, ["init-project"])
@@ -78,7 +77,6 @@ def test_delete_project_command():
     assert not project_path.exists()
     assert "🗑️ Deleted project" in result.output
 
-
 def test_delete_project_fails_if_missing():
     project_name = "nonexistent-project"
     project_path = DATA_DIR / project_name
@@ -90,7 +88,6 @@ def test_delete_project_fails_if_missing():
     result = runner.invoke(app, ["delete-project", project_name, "--force"])
     assert result.exit_code != 0
     assert "does not exist" in result.output
-
 
 def test_delete_project_cancelled_on_prompt():
     project_name = "test-cancel"
@@ -107,7 +104,6 @@ def test_delete_project_cancelled_on_prompt():
     assert project_path.exists()
 
     shutil.rmtree(project_path)
-
 
 def test_delete_project_confirmed_prompt():
     project_name = "test-confirm"
@@ -274,7 +270,6 @@ def test_edit_context_opens_editor():
 
     shutil.rmtree(DATA_DIR / project)
 
-
 def test_edit_context_fails_if_missing():
     project = "test-edit-missing"
     result = runner.invoke(app, ["edit-context", project, "facts", "nope"])
@@ -313,5 +308,43 @@ def test_edit_context_falls_back_to_nano():
         assert result.exit_code == 0
         mock_run.assert_called_once()
         assert mock_run.call_args[0][0][0] == "nano"
+
+    shutil.rmtree(DATA_DIR / project)
+
+# VIEW FILE TESTS
+def test_view_context_prints_file_contents():
+    project = "test-view"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "view-me"])
+    file_path = DATA_DIR / project / "facts" / "view-me.md"
+    file_path.write_text("Hello from view test!\n")
+
+    result = runner.invoke(app, ["view-context", project, "facts", "view-me"])
+    assert result.exit_code == 0
+    assert "Hello from view test!" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_view_context_fails_on_missing_file():
+    project = "test-view-missing"
+    result = runner.invoke(app, ["view-context", project, "facts", "nope"])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+def test_view_context_uses_pager(monkeypatch):
+    project = "test-view-pager"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "paged"])
+    file_path = DATA_DIR / project / "facts" / "paged.md"
+    file_path.write_text("Content to be paged\n")
+
+    with patch("subprocess.Popen") as mock_popen:
+        mock_process = mock_popen.return_value
+        mock_process.communicate.return_value = (None, None)
+
+        result = runner.invoke(app, ["view-context", project, "facts", "paged", "--pager"])
+        assert result.exit_code == 0
+        mock_popen.assert_called_once_with(["less"], stdin=subprocess.PIPE)
+        mock_process.communicate.assert_called_once()
 
     shutil.rmtree(DATA_DIR / project)

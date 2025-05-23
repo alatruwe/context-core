@@ -19,7 +19,7 @@ def hello():
 
 
 # ──────────────────────────────────────────────────────────────
-# CLI COMMAND: init
+# CLI COMMAND: init-project
 # Initializes a new project with folder structure and metadata
 # ──────────────────────────────────────────────────────────────
 @app.command("init-project")
@@ -112,7 +112,7 @@ def create_context(project: str, type: str, name: str):
     typer.echo(f"✅ Created file: {file_path}")
 
 # ──────────────────────────────────────────────────────────────
-# CLI COMMAND: delete
+# CLI COMMAND: delete-context
 # Delete a context file from a project
 # ──────────────────────────────────────────────────────────────
 @app.command("delete-context")
@@ -153,6 +153,28 @@ def edit_context(project: str, type: str, name: str):
     editor = os.environ.get("EDITOR", "nano")
     subprocess.run([editor, str(file_path)])
 
+# ──────────────────────────────────────────────────────────────
+# CLI COMMAND: view-context
+# Print the contents of a context file to the terminal
+# ──────────────────────────────────────────────────────────────
+@app.command("view-context")
+def view_context(project: str, type: str, name: str, pager: bool = typer.Option(False, "--pager", help="Use a pager like 'less' to view the file")):
+    """
+    View the contents of a context file.
+    """
+    file_path = Path("context_data") / project / type / f"{name}.md"
+
+    if not file_path.exists():
+        typer.echo(f"❌ File '{file_path}' does not exist.")
+        raise typer.Exit(code=1)
+
+    content = file_path.read_text()
+
+    if pager:
+        pager_process = subprocess.Popen(["less"], stdin=subprocess.PIPE)
+        pager_process.communicate(input=content.encode())
+    else:
+        typer.echo(content)
 
 # ──────────────────────────────────────────────────────────────
 # Main entry point for running with `python -m context_core`
