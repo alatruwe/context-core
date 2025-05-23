@@ -1,6 +1,8 @@
+import os
 import shutil
 from pathlib import Path
 from typer.testing import CliRunner
+from unittest.mock import patch
 from context_core.__main__ import app
 
 runner = CliRunner()
@@ -139,7 +141,6 @@ def test_create_context_file():
 
     shutil.rmtree(project_path)
 
-
 def test_create_context_file_already_exists():
     project = "test-duplicate"
     runner.invoke(app, ["init-project", project])
@@ -157,7 +158,6 @@ def test_create_context_missing_folder():
     assert result.exit_code != 0
     assert "does not exist" in result.output
 
-
 def test_create_context_invalid_characters():
     project = "test-invalid-chars"
     runner.invoke(app, ["init-project", project])
@@ -169,7 +169,6 @@ def test_create_context_invalid_characters():
     assert "# Bad@Name!" in file_path.read_text()
 
     shutil.rmtree(DATA_DIR / project)
-
 
 def test_create_context_template_format():
     project = "test-template"
@@ -216,7 +215,6 @@ def test_delete_context_file_does_not_exist():
 
     shutil.rmtree(DATA_DIR / project)
 
-
 def test_delete_context_prompt_rejection():
     project = "test-prompt-reject"
     runner.invoke(app, ["init-project", project])
@@ -230,7 +228,6 @@ def test_delete_context_prompt_rejection():
     assert file_path.exists()
 
     shutil.rmtree(DATA_DIR / project)
-
 
 def test_delete_context_prompt_confirmation():
     project = "test-prompt-confirm"
@@ -246,7 +243,6 @@ def test_delete_context_prompt_confirmation():
 
     shutil.rmtree(DATA_DIR / project)
 
-
 def test_delete_context_folder_remains_after_file_deletion():
     project = "test-folder-persists"
     runner.invoke(app, ["init-project", project])
@@ -258,5 +254,64 @@ def test_delete_context_folder_remains_after_file_deletion():
     assert result.exit_code == 0
     assert not file_path.exists()
     assert (DATA_DIR / project / "facts").exists()
+
+    shutil.rmtree(DATA_DIR / project)
+
+# EDIT FILE TESTS
+def test_edit_context_opens_editor():
+    project = "test-edit"
+    file_path = DATA_DIR / project / "facts" / "edit-me.md"
+
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "edit-me"])
+    assert file_path.exists()  # ensure file was created
+
+    with patch("subprocess.run") as mock_run:
+        result = runner.invoke(app, ["edit-context", project, "facts", "edit-me"])
+        assert result.exit_code == 0, result.output
+        mock_run.assert_called_once()
+        assert str(file_path) in mock_run.call_args[0][0]
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+def test_edit_context_fails_if_missing():
+    project = "test-edit-missing"
+    result = runner.invoke(app, ["edit-context", project, "facts", "nope"])
+
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+def test_edit_context_respects_editor_env():
+    project = "test-edit-env"
+    file_path = DATA_DIR / project / "facts" / "env-editor.md"
+
+
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "env-editor"])
+    assert file_path.exists()  # ensure file was created
+
+    with patch.dict(os.environ, {"EDITOR": "mock-editor"}), patch("subprocess.run") as mock_run:
+        result = runner.invoke(app, ["edit-context", project, "facts", "env-editor"])
+        assert result.exit_code == 0
+        mock_run.assert_called_once()
+        assert mock_run.call_args[0][0][0] == "mock-editor"
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_edit_context_falls_back_to_nano():
+    project = "test-edit-fallback"
+    file_path = DATA_DIR / project / "facts" / "fallback-editor.md"
+
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "fallback-editor"])
+    assert file_path.exists()  # ensure file was created
+
+    # Clear EDITOR env for this test
+    with patch.dict(os.environ, {}, clear=True), patch("subprocess.run") as mock_run:
+        result = runner.invoke(app, ["edit-context", project, "facts", "fallback-editor"])
+        assert result.exit_code == 0
+        mock_run.assert_called_once()
+        assert mock_run.call_args[0][0][0] == "nano"
 
     shutil.rmtree(DATA_DIR / project)

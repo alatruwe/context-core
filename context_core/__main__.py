@@ -1,6 +1,7 @@
 import typer
 import os
 import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -84,7 +85,7 @@ def delete_project(project_name: str, force: bool = typer.Option(False, "--force
     typer.echo(f"🗑️ Deleted project '{project_name}' and all contents.")
 
 # ──────────────────────────────────────────────────────────────
-# CLI COMMAND: create
+# CLI COMMAND: create-context
 # Create a new context file in a given project and type folder
 # ──────────────────────────────────────────────────────────────
 @app.command("create-context")
@@ -133,6 +134,24 @@ def delete_context(project: str, type: str, name: str, force: bool = typer.Optio
 
     file_path.unlink()
     typer.echo(f"🗑️ Deleted file: {file_path}")
+
+# ──────────────────────────────────────────────────────────────
+# CLI COMMAND: edit-context
+# Edit a context file in your system editor
+# ──────────────────────────────────────────────────────────────
+@app.command("edit-context")
+def edit_context(project: str, type: str, name: str):
+    """
+    Edit a context file in your default system editor (e.g. nano, code).
+    """
+    file_path = Path("context_data") / project / type / f"{name}.md"
+
+    if not file_path.exists():
+        typer.echo(f"❌ File '{file_path}' does not exist.")
+        raise typer.Exit(code=1)
+
+    editor = os.environ.get("EDITOR", "nano")
+    subprocess.run([editor, str(file_path)])
 
 
 # ──────────────────────────────────────────────────────────────
