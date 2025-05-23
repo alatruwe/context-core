@@ -42,7 +42,7 @@ def init_project(project_name: str):
     """
     Initialize a new context project with folders and metadata.
     """
-    base_path = Path("context_data") / project_name
+    base_path = Path("projects_data") / project_name
 
     # Define the standard context subfolders
     subfolders = [
@@ -81,7 +81,7 @@ def delete_project(project_name: str, force: bool = typer.Option(False, "--force
     """
     Delete a project and all its context folders and files.
     """
-    base_path = Path("context_data") / project_name
+    base_path = Path("projects_data") / project_name
 
     if not base_path.exists():
         typer.echo(f"❌ Project '{project_name}' does not exist.")
@@ -115,7 +115,7 @@ def create_context(project: str, type: str, name: str):
             typer.echo(f"  - {t}")
         raise typer.Exit(code=1)
 
-    base_path = Path("context_data") / project / type
+    base_path = Path("projects_data") / project / type
     file_path = base_path / f"{name}.md"
 
     if not base_path.exists():
@@ -141,7 +141,7 @@ def delete_context(project: str, type: str, name: str, force: bool = typer.Optio
     """
     Delete a context file from a project (e.g. facts/my-topic.md).
     """
-    file_path = Path("context_data") / project / type / f"{name}.md"
+    file_path = Path("projects_data") / project / type / f"{name}.md"
 
     if not file_path.exists():
         typer.echo(f"❌ File '{file_path}' does not exist.")
@@ -165,7 +165,7 @@ def edit_context(project: str, type: str, name: str):
     """
     Edit a context file in your default system editor (e.g. nano, code).
     """
-    file_path = Path("context_data") / project / type / f"{name}.md"
+    file_path = Path("projects_data") / project / type / f"{name}.md"
 
     if not file_path.exists():
         typer.echo(f"❌ File '{file_path}' does not exist.")
@@ -183,7 +183,7 @@ def view_context(project: str, type: str, name: str, pager: bool = typer.Option(
     """
     View the contents of a context file.
     """
-    file_path = Path("context_data") / project / type / f"{name}.md"
+    file_path = Path("projects_data") / project / type / f"{name}.md"
 
     if not file_path.exists():
         typer.echo(f"❌ File '{file_path}' does not exist.")
@@ -206,7 +206,7 @@ def list_contexts(project: str, type: str = typer.Argument(None, help="Optional 
     """
     List context files in a project. If a type is provided, only list that folder.
     """
-    project_path = Path("context_data") / project
+    project_path = Path("projects_data") / project
 
     if not project_path.exists():
         typer.echo(f"❌ Project '{project}' does not exist.")
@@ -252,7 +252,7 @@ def walkthrough():
 
     typer.echo("🗂️ Step 2: Create your first context file")
     typer.echo("  $ context create-context my-first-project facts first-notes")
-    typer.echo("  ✅ Created file: context_data/my-first-project/facts/first-notes.md\n")
+    typer.echo("  ✅ Created file: projects_data/my-first-project/facts/first-notes.md\n")
 
     typer.echo("✏️ Step 3: Edit the file (optional)")
     typer.echo("  $ context edit-context my-first-project facts first-notes")
@@ -282,7 +282,7 @@ def _run_walkthrough_interactive():
         else:
             break
 
-    base_path = Path("context_data") / project
+    base_path = Path("projects_data") / project
 
     if base_path.exists():
         typer.echo(f"⚠️ Project '{project}' already exists. Skipping init.")

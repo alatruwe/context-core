@@ -8,7 +8,7 @@ from context_core.__main__ import app
 from typer import Typer
 
 runner = CliRunner()
-DATA_DIR = Path("context_data")
+DATA_DIR = Path("projects_data")
 
 
 def test_hello_command():
