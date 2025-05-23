@@ -91,9 +91,9 @@ These files are loaded and interpreted by:
 ### 🖥️ Command-Line Tool (MVP Engine)
 ```bash
 context init project-name
-context create facts system-design
+context create-context facts system-design
 context summarize chat.md
-context update project-name summary.md
+context update-context project-name summary.md
 context load --project project-name --facts --goals
 ```
 The CLI powers GPT tool actions and supports manual control.
