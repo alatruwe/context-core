@@ -5,6 +5,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 from unittest.mock import patch
 from context_core.__main__ import app
+from typer import Typer
 
 runner = CliRunner()
 DATA_DIR = Path("context_data")
@@ -163,6 +164,16 @@ def test_create_context_invalid_characters():
     file_path = DATA_DIR / project / "facts" / "bad@name!.md"
     assert file_path.exists()
     assert "# Bad@Name!" in file_path.read_text()
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_create_context_invalid_type():
+    project = "test-invalid-type"
+    runner.invoke(app, ["init-project", project])
+
+    result = runner.invoke(app, ["create-context", project, "fake-type", "test-note"])
+    assert result.exit_code != 0
+    assert "is not a valid context type" in result.output
 
     shutil.rmtree(DATA_DIR / project)
 
@@ -397,3 +408,54 @@ def test_list_contexts_project_not_found():
     result = runner.invoke(app, ["list-contexts", project])
     assert result.exit_code != 0
     assert "does not exist" in result.output
+
+def test_list_contexts_type_no_files():
+    project = "test-empty-type"
+    runner.invoke(app, ["init-project", project])  # creates empty folders
+
+    result = runner.invoke(app, ["list-contexts", project, "facts"])
+    assert result.exit_code == 0
+    assert "No context files found in 'facts/'" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_list_contexts_project_no_files():
+    project = "test-empty-project"
+    runner.invoke(app, ["init-project", project])  # creates empty folders
+
+    result = runner.invoke(app, ["list-contexts", project])
+    assert result.exit_code == 0
+    assert f"No context files found in project '{project}'" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+# WALKTHROUGH TESTS
+def test_walkthrough_preview_only():
+    result = runner.invoke(app, ["walkthrough"], input="n\n")
+    assert result.exit_code == 0
+    assert "context init my-first-project" in result.output
+    assert "Would you like to create your first project now?" in result.output
+
+def test_walkthrough_triggers_interactive():
+    with patch("context_core.__main__._run_walkthrough_interactive") as mock_run:
+        result = runner.invoke(app, ["walkthrough"], input="y\n")
+        assert result.exit_code == 0
+        mock_run.assert_called_once()
+        assert "Launching interactive setup..." in result.output
+
+def test_run_walkthrough_interactive_flow():
+    inputs = "\n".join([
+        "test-walkthrough-project",  # project name
+        "facts",                     # context type
+        "quickstart-notes",         # file name
+        "n"                          # don't open editor
+    ]) + "\n"
+
+    result = runner.invoke(app, ["walkthrough"], input="y\n" + inputs)
+
+    assert result.exit_code == 0
+    assert "Project 'test-walkthrough-project' initialized" in result.output
+    assert "Created file" in result.output
+    assert "You’re ready!" in result.output
+
+    shutil.rmtree(DATA_DIR / "test-walkthrough-project")

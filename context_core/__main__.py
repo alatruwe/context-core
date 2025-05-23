@@ -25,6 +25,14 @@ def hello():
     typer.echo("👋 Hello from Context Utility!")
 
 
+def safe_prompt(prompt_text: str) -> str:
+    value = typer.prompt(prompt_text)
+    if value.strip().lower() == "exit":
+        typer.echo("👋 Exiting walkthrough. No changes made.")
+        raise typer.Exit()
+    return value
+
+
 # ──────────────────────────────────────────────────────────────
 # CLI COMMAND: init-project
 # Initializes a new project with folder structure and metadata
@@ -123,7 +131,6 @@ def create_context(project: str, type: str, name: str):
     file_path.write_text(content)
 
     typer.echo(f"✅ Created file: {file_path}")
-
 
 # ──────────────────────────────────────────────────────────────
 # CLI COMMAND: delete-context
@@ -230,6 +237,99 @@ def list_contexts(project: str, type: str = typer.Argument(None, help="Optional 
                         typer.echo(f"  - {file.name}")
         if not found:
             typer.echo(f"📦 No context files found in project '{project}'.")
+
+@app.command("walkthrough")
+def walkthrough():
+    """
+    Show a step-by-step example of setting up a project, then optionally walk the user through it interactively.
+    """
+    typer.echo("👋 Welcome to Context Utility!\n")
+    typer.echo("Let’s walk through how to set up your first project and context file.\n")
+
+    typer.echo("🔧 Step 1: Initialize your project")
+    typer.echo("  $ context init my-first-project")
+    typer.echo("  ✅ Project 'my-first-project' initialized with standard folders.\n")
+
+    typer.echo("🗂️ Step 2: Create your first context file")
+    typer.echo("  $ context create-context my-first-project facts first-notes")
+    typer.echo("  ✅ Created file: context_data/my-first-project/facts/first-notes.md\n")
+
+    typer.echo("✏️ Step 3: Edit the file (optional)")
+    typer.echo("  $ context edit-context my-first-project facts first-notes")
+    typer.echo("  (opens in your default editor like nano or VS Code)\n")
+
+    typer.echo("📋 Step 4: View your context files")
+    typer.echo("  $ context list-contexts my-first-project")
+    typer.echo("  📂 facts/")
+    typer.echo("    - first-notes.md\n")
+
+    typer.echo("🚀 That’s it! You’re now ready to work with structured context.\n")
+
+    confirm = typer.confirm("Would you like to create your first project now?", default=True)
+    if confirm:
+        typer.echo("\nLaunching interactive setup...\n")
+        # Reuse the real setup logic from the earlier interactive walkthrough
+        _run_walkthrough_interactive()
+    else:
+        typer.echo("👋 No problem. You can run this again anytime with `context walkthrough`.")
+
+def _run_walkthrough_interactive():
+    while True:
+        project = safe_prompt("📁 Project name (use dashes or underscores, no spaces)")
+        if " " in project:
+            typer.echo("❌ Project names cannot contain spaces.")
+            typer.echo("👉 Use dashes or underscores instead, like `my-project` or `client_data`.\n")
+        else:
+            break
+
+    base_path = Path("context_data") / project
+
+    if base_path.exists():
+        typer.echo(f"⚠️ Project '{project}' already exists. Skipping init.")
+    else:
+        subfolders = [
+            "facts", "decisions", "goals",
+            "instructions", "actions", "summaries",
+            "archives", "personas", "timeline"
+        ]
+        for folder in subfolders:
+            (base_path / folder).mkdir(parents=True, exist_ok=True)
+        meta = {
+            "project": project,
+            "created": datetime.now().isoformat(),
+            "context_types": subfolders
+        }
+        with open(base_path / "meta.json", "w") as f:
+            json.dump(meta, f, indent=2)
+        typer.echo(f"✅ Project '{project}' initialized.\n")
+
+    typer.echo("📂 Available context types:")
+    for t in VALID_CONTEXT_TYPES:
+        typer.echo(f"  - {t}")
+
+    context_type = safe_prompt("\n📂 Choose a context type")
+    while context_type not in VALID_CONTEXT_TYPES:
+        typer.echo(f"❌ '{context_type}' is not a valid type.")
+        context_type = safe_prompt("📂 Try again (e.g. facts, goals)")
+
+    file_name = safe_prompt("📝 Context file name (without .md)")
+
+    file_path = base_path / context_type / f"{file_name}.md"
+    if file_path.exists():
+        typer.echo(f"⚠️ File '{file_path}' already exists. Skipping create.")
+    else:
+        title = file_name.replace("-", " ").title()
+        content = f"# {title}\n\nCreated on {datetime.now().isoformat()}\n"
+        file_path.write_text(content)
+        typer.echo(f"✅ Created file: {file_path}")
+
+    open_now = typer.confirm("✏️ Do you want to open it now?", default=True)
+    if open_now:
+        editor = os.environ.get("EDITOR", "nano")
+        subprocess.run([editor, str(file_path)])
+
+    typer.echo("\n🚀 You’re ready! Use:")
+    typer.echo(f"  context list-contexts {project}")
 
 
 # ──────────────────────────────────────────────────────────────
