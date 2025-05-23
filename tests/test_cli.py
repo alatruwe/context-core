@@ -12,7 +12,7 @@ def test_hello_command():
     assert result.exit_code == 0
     assert "👋 Hello from Context Utility!" in result.output
 
-
+# INIT PROJECT TESTS
 def test_init_creates_project_structure():
     project_name = "test-project"
     project_path = DATA_DIR / project_name
@@ -21,7 +21,7 @@ def test_init_creates_project_structure():
     if project_path.exists():
         shutil.rmtree(project_path)
 
-    result = runner.invoke(app, ["init", project_name])
+    result = runner.invoke(app, ["init-project", project_name])
     assert result.exit_code == 0
     assert project_path.exists()
     assert (project_path / "facts").exists()
@@ -41,12 +41,12 @@ def test_init_fails_if_project_exists():
         shutil.rmtree(project_path)
 
     # First run: create the project
-    result1 = runner.invoke(app, ["init", project_name])
+    result1 = runner.invoke(app, ["init-project", project_name])
     assert result1.exit_code == 0
     assert project_path.exists()
 
     # Second run: try to re-create it
-    result2 = runner.invoke(app, ["init", project_name])
+    result2 = runner.invoke(app, ["init-project", project_name])
     assert result2.exit_code != 0
     assert "already exists" in result2.output
 
@@ -55,11 +55,11 @@ def test_init_fails_if_project_exists():
 
 
 def test_init_fails_without_project_name():
-    result = runner.invoke(app, ["init"])
+    result = runner.invoke(app, ["init-project"])
     assert result.exit_code != 0
     assert "Usage:" in result.output or "Missing argument" in result.output
 
-
+# DELETE PROJECT TESTS
 def test_delete_project_command():
     project_name = "test-delete"
     project_path = DATA_DIR / project_name
@@ -117,3 +117,146 @@ def test_delete_project_confirmed_prompt():
     assert result.exit_code == 0
     assert not project_path.exists()
     assert "🗑️ Deleted project" in result.output
+
+# CREATE FILE TESTS
+def test_create_context_file():
+    project_name = "test-create"
+    project_path = DATA_DIR / project_name
+    facts_path = project_path / "facts"
+    file_path = facts_path / "my-topic.md"
+
+    # Ensure clean start
+    if project_path.exists():
+        shutil.rmtree(project_path)
+
+    runner.invoke(app, ["init-project", project_name])
+    result = runner.invoke(app, ["create-context", project_name, "facts", "my-topic"])
+
+    assert result.exit_code == 0
+    assert file_path.exists()
+    assert "✅ Created file" in result.output
+    assert "# My Topic" in file_path.read_text()
+
+    shutil.rmtree(project_path)
+
+
+def test_create_context_file_already_exists():
+    project = "test-duplicate"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "duplicate-topic"])
+
+    result = runner.invoke(app, ["create-context", project, "facts", "duplicate-topic"])
+    assert result.exit_code != 0
+    assert "already exists" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_create_context_missing_folder():
+    project = "nonexistent-project"
+    result = runner.invoke(app, ["create-context", project, "facts", "missing-folder-test"])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+
+def test_create_context_invalid_characters():
+    project = "test-invalid-chars"
+    runner.invoke(app, ["init-project", project])
+
+    result = runner.invoke(app, ["create-context", project, "facts", "bad@name!"])
+    assert result.exit_code == 0  # Should still allow file creation
+    file_path = DATA_DIR / project / "facts" / "bad@name!.md"
+    assert file_path.exists()
+    assert "# Bad@Name!" in file_path.read_text()
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+def test_create_context_template_format():
+    project = "test-template"
+    runner.invoke(app, ["init-project", project])
+
+    result = runner.invoke(app, ["create-context", project, "facts", "test-format"])
+    file_path = DATA_DIR / project / "facts" / "test-format.md"
+    content = file_path.read_text()
+
+    assert "# Test Format" in content
+    assert "Created on" in content
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+# DELETE FILE TESTS
+def test_delete_context_file():
+    project_name = "test-delete-context"
+    project_path = DATA_DIR / project_name
+    facts_path = project_path / "facts"
+    file_path = facts_path / "delete-me.md"
+
+    # Setup
+    runner.invoke(app, ["init-project", project_name])
+    runner.invoke(app, ["create-context", project_name, "facts", "delete-me"])
+    assert file_path.exists()
+
+    # Delete with --force
+    result = runner.invoke(app, ["delete-context", project_name, "facts", "delete-me", "--force"])
+
+    assert result.exit_code == 0
+    assert not file_path.exists()
+    assert "🗑️ Deleted file" in result.output
+
+    shutil.rmtree(project_path)
+
+def test_delete_context_file_does_not_exist():
+    project = "test-delete-missing"
+    runner.invoke(app, ["init-project", project])
+    result = runner.invoke(app, ["delete-context", project, "facts", "not-there", "--force"])
+
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+def test_delete_context_prompt_rejection():
+    project = "test-prompt-reject"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "keep-me"])
+
+    file_path = DATA_DIR / project / "facts" / "keep-me.md"
+    result = runner.invoke(app, ["delete-context", project, "facts", "keep-me"], input="n\n")
+
+    assert result.exit_code != 0
+    assert "❎ Cancelled." in result.output
+    assert file_path.exists()
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+def test_delete_context_prompt_confirmation():
+    project = "test-prompt-confirm"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "go-ahead"])
+
+    file_path = DATA_DIR / project / "facts" / "go-ahead.md"
+    result = runner.invoke(app, ["delete-context", project, "facts", "go-ahead"], input="y\n")
+
+    assert result.exit_code == 0
+    assert "🗑️ Deleted file" in result.output
+    assert not file_path.exists()
+
+    shutil.rmtree(DATA_DIR / project)
+
+
+def test_delete_context_folder_remains_after_file_deletion():
+    project = "test-folder-persists"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "one-file"])
+
+    file_path = DATA_DIR / project / "facts" / "one-file.md"
+    result = runner.invoke(app, ["delete-context", project, "facts", "one-file", "--force"])
+
+    assert result.exit_code == 0
+    assert not file_path.exists()
+    assert (DATA_DIR / project / "facts").exists()
+
+    shutil.rmtree(DATA_DIR / project)
