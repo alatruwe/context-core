@@ -1,0 +1,15 @@
+{
+  "project": "my-work",
+  "created": "2025-05-22T21:37:57.759519",
+  "context_types": [
+    "facts",
+    "decisions",
+    "goals",
+    "instructions",
+    "actions",
+    "summaries",
+    "archives",
+    "personas",
+    "timeline"
+  ]
+}
