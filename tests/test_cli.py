@@ -331,7 +331,7 @@ def test_view_context_fails_on_missing_file():
     assert result.exit_code != 0
     assert "does not exist" in result.output
 
-def test_view_context_uses_pager(monkeypatch):
+def test_view_context_uses_pager():
     project = "test-view-pager"
     runner.invoke(app, ["init-project", project])
     runner.invoke(app, ["create-context", project, "facts", "paged"])
