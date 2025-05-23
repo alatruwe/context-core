@@ -348,3 +348,52 @@ def test_view_context_uses_pager():
         mock_process.communicate.assert_called_once()
 
     shutil.rmtree(DATA_DIR / project)
+
+# LIST FILES TESTS
+def test_list_contexts_by_type():
+    project = "test-list-type"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "file-one"])
+    runner.invoke(app, ["create-context", project, "facts", "file-two"])
+
+    result = runner.invoke(app, ["list-contexts", project, "facts"])
+    assert result.exit_code == 0
+    assert "📂 facts/" in result.output
+    assert "file-one.md" in result.output
+    assert "file-two.md" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_list_contexts_whole_project():
+    project = "test-list-all"
+    runner.invoke(app, ["init-project", project])
+    runner.invoke(app, ["create-context", project, "facts", "a"])
+    runner.invoke(app, ["create-context", project, "goals", "b"])
+    runner.invoke(app, ["create-context", project, "decisions", "c"])
+
+    result = runner.invoke(app, ["list-contexts", project])
+    assert result.exit_code == 0
+    assert "📂 facts/" in result.output
+    assert "a.md" in result.output
+    assert "📂 goals/" in result.output
+    assert "b.md" in result.output
+    assert "📂 decisions/" in result.output
+    assert "c.md" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_list_contexts_type_not_found():
+    project = "test-list-missing-type"
+    runner.invoke(app, ["init-project", project])
+
+    result = runner.invoke(app, ["list-contexts", project, "fake-type"])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+    shutil.rmtree(DATA_DIR / project)
+
+def test_list_contexts_project_not_found():
+    project = "not-a-project"
+    result = runner.invoke(app, ["list-contexts", project])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output

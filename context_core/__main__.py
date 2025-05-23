@@ -177,6 +177,48 @@ def view_context(project: str, type: str, name: str, pager: bool = typer.Option(
         typer.echo(content)
 
 # ──────────────────────────────────────────────────────────────
+# CLI COMMAND: list-contexts
+# List context files in a project, optionally filtered by type
+# ──────────────────────────────────────────────────────────────
+@app.command("list-contexts")
+def list_contexts(project: str, type: str = typer.Argument(None, help="Optional context type (e.g. facts, goals)")):
+    """
+    List context files in a project. If a type is provided, only list that folder.
+    """
+    project_path = Path("context_data") / project
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{project}' does not exist.")
+        raise typer.Exit(code=1)
+
+    if type:
+        type_path = project_path / type
+        if not type_path.exists():
+            typer.echo(f"❌ Context type '{type}' does not exist in project '{project}'.")
+            raise typer.Exit(code=1)
+
+        files = sorted(type_path.glob("*.md"))
+        if not files:
+            typer.echo(f"📂 No context files found in '{type}/'")
+        else:
+            typer.echo(f"📂 {type}/")
+            for file in files:
+                typer.echo(f"  - {file.name}")
+    else:
+        found = False
+        for folder in sorted(project_path.iterdir()):
+            if folder.is_dir():
+                files = sorted(folder.glob("*.md"))
+                if files:
+                    found = True
+                    typer.echo(f"📂 {folder.name}/")
+                    for file in files:
+                        typer.echo(f"  - {file.name}")
+        if not found:
+            typer.echo(f"📦 No context files found in project '{project}'.")
+
+
+# ──────────────────────────────────────────────────────────────
 # Main entry point for running with `python -m context_core`
 # ──────────────────────────────────────────────────────────────
 def main():
